@@ -19,50 +19,114 @@ def FCToFC(inputFC, outputFC,
             arcpy.FeatureClassToFeatureClass_conversion(inputFC, outputFCLocation, outputFCName,
                                                         where_clause = subsetQuery)
         return True
-        
-    if keepFields <> "ALL" and omitFields == None:
-        
-        fieldMappings = arcpy.FieldMappings()
-        fieldMappings.addTable(inputFC)
+    else:    
+        if keepFields <> "ALL" and omitFields == None:
+            
+            fieldMappings = arcpy.FieldMappings()
+            fieldMappings.addTable(inputFC)
 
-        outputFieldMaps = []
+            outputFieldMaps = []
 
-        for keepField in keepFields:
-            thisFieldMap = fieldMappings.getFieldMap(fieldMappings.findFieldMapIndex(keepField))
-            outputFieldMaps.append(thisFieldMap)
-
-        fieldMappings.removeAll()
-
-        for outputFieldMap in outputFieldMaps:
-            fieldMappings.addFieldMap(outputFieldMap)
-
-
-    if keepFields == "ALL" and omitFields <> None:
-
-        originalFieldNames = listFieldNames(inputFC)
-        
-        fieldMappings = arcpy.FieldMappings()
-        fieldMappings.addTable(inputFC)
-
-        outputFieldMaps = []
-
-        for originalFieldName in originalFieldNames:
-            if originalFieldName not in omitFields:
-                thisFieldMap = fieldMappings.getFieldMap(fieldMappings.findFieldMapIndex(originalFieldName))
+            for keepField in keepFields:
+                thisFieldMap = fieldMappings.getFieldMap(fieldMappings.findFieldMapIndex(keepField))
                 outputFieldMaps.append(thisFieldMap)
 
-        fieldMappings.removeAll()
+            fieldMappings.removeAll()
 
-        for outputFieldMap in outputFieldMaps:
-            fieldMappings.addFieldMap(outputFieldMap)
+            for outputFieldMap in outputFieldMaps:
+                fieldMappings.addFieldMap(outputFieldMap)
 
-    if subsetQuery == None:
-        arcpy.FeatureClassToFeatureClass_conversion(inputFC, outputFCLocation, outputFCName,
-                                                    field_mapping = fieldMappings)
-    else:
-        arcpy.FeatureClassToFeatureClass_conversion(inputFC, outputFCLocation, outputFCName,
-                                                    field_mapping = fieldMappings,
-                                                    where_clause = subsetQuery)
+
+        if keepFields == "ALL" and omitFields <> None:
+
+            originalFieldNames = listFieldNames(inputFC)
+            
+            fieldMappings = arcpy.FieldMappings()
+            fieldMappings.addTable(inputFC)
+
+            outputFieldMaps = []
+
+            for originalFieldName in originalFieldNames:
+                if originalFieldName not in omitFields:
+                    thisFieldMap = fieldMappings.getFieldMap(fieldMappings.findFieldMapIndex(originalFieldName))
+                    outputFieldMaps.append(thisFieldMap)
+
+            fieldMappings.removeAll()
+
+            for outputFieldMap in outputFieldMaps:
+                fieldMappings.addFieldMap(outputFieldMap)
+
+        if subsetQuery == None:
+            arcpy.FeatureClassToFeatureClass_conversion(inputFC, outputFCLocation, outputFCName,
+                                                        field_mapping = fieldMappings)
+        else:
+            arcpy.FeatureClassToFeatureClass_conversion(inputFC, outputFCLocation, outputFCName,
+                                                        field_mapping = fieldMappings,
+                                                        where_clause = subsetQuery)
+
+    return True
+
+def TableToTable(inputTable, outputTable,
+                 subsetQuery = None, keepFields = "ALL", omitFields = None):
+    ## This function is a more capable version of the built-in
+    ## Table to Table tool.  For more information
+    ## on the original tool, go to
+    ## http://pro.arcgis.com/en/pro-app/tool-reference/conversion/feature-class-to-feature-class.htm
+
+    outputTableLocation = os.path.dirname(outputTable)
+    outputTableName = os.path.basename(outputTable)
+    
+    if keepFields == "ALL" and omitFields == None:
+        if subsetQuery == None:
+            arcpy.TableToTable_conversion(inputTable, outputTableLocation, outputTableName)
+        else:
+            arcpy.TableToTable_conversion(inputTable, outputTableLocation, outputTableName,
+                                          where_clause = subsetQuery)
+        return True
+    else:    
+        if keepFields <> "ALL" and omitFields == None:
+            
+            fieldMappings = arcpy.FieldMappings()
+            fieldMappings.addTable(inputTable)
+
+            outputFieldMaps = []
+
+            for keepField in keepFields:
+                thisFieldMap = fieldMappings.getFieldMap(fieldMappings.findFieldMapIndex(keepField))
+                outputFieldMaps.append(thisFieldMap)
+
+            fieldMappings.removeAll()
+
+            for outputFieldMap in outputFieldMaps:
+                fieldMappings.addFieldMap(outputFieldMap)
+
+
+        if keepFields == "ALL" and omitFields <> None:
+
+            originalFieldNames = listFieldNames(inputTable)
+            
+            fieldMappings = arcpy.FieldMappings()
+            fieldMappings.addTable(inputTable)
+
+            outputFieldMaps = []
+
+            for originalFieldName in originalFieldNames:
+                if originalFieldName not in omitFields:
+                    thisFieldMap = fieldMappings.getFieldMap(fieldMappings.findFieldMapIndex(originalFieldName))
+                    outputFieldMaps.append(thisFieldMap)
+
+            fieldMappings.removeAll()
+
+            for outputFieldMap in outputFieldMaps:
+                fieldMappings.addFieldMap(outputFieldMap)
+
+        if subsetQuery == None:
+            arcpy.TableToTable_conversion(inputTable, outputTableLocation, outputTableName,
+                                          field_mapping = fieldMappings)
+        else:
+            arcpy.TableToTable_conversion(inputTable, outputTableLocation, outputTableName,
+                                          field_mapping = fieldMappings,
+                                          where_clause = subsetQuery)
 
     return True
 
@@ -75,6 +139,34 @@ def copyFieldsToFC(inputOBJ, outputFC, fieldsToCopy):
         arcpy.AddField_management(outputFC, templateField.name, templateField.type, templateField.precision,
                                   templateField.scale, templateField.length, templateField.aliasName,
                                   templateField.isNullable, templateField.required, templateField.domain)
+    return True
+
+def createFC(outputFC, geometryType, fields,
+             spatialReference = ""):
+
+    outputFCPath = os.path.dirname(outputFC)
+    outputFCName = os.path.basename(outputFC)
+    
+    arcpy.CreateFeatureclass_management(outputFCPath, outputFCName, geometryType,
+                                        spatial_reference = spatialReference)
+
+    for field in fields:
+        fieldName, fieldType = field
+        arcpy.AddField_management(outputFC, fieldName, fieldType)
+
+    return True
+
+def createTable(outputTable, fields):
+
+    outputTablePath = os.path.dirname(outputTable)
+    outputTableName = os.path.basename(outputTable)
+    
+    arcpy.CreateTable_management(outputTablePath, outputTableName)
+
+    for field in fields:
+        fieldName, fieldType = field
+        arcpy.AddField_management(outputTable, fieldName, fieldType)
+
     return True
 
 if __name__ == "__main__":
