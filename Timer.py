@@ -3,10 +3,12 @@ from ez.Table import *
 
 class ezTimer:
 
-    def __init__(self, title=""):
+    def __init__(self, title = "", realtimePrint = False):
         self.reportData = []
         self.headers = ["Total Time", "Step Time", "Step Description"]
         self.title = title
+        self.realtimePrint = realtimePrint
+        self.printedHeader = False
 
         self.timeZero = datetime.now()
         self.lastTime = self.timeZero
@@ -21,6 +23,15 @@ class ezTimer:
         self.reportData.append(reportRow)
 
         self.lastTime = currentTime
+
+        if self.realtimePrint == True:
+            if self.printedHeader == False:
+                reportTable = ezTable(self.reportData, self.headers, title = self.title, display = False)
+                self.printedHeader = True
+            else:
+                reportTable = ezTable([reportRow], display = False)
+            print reportTable
+            return reportTable
 
     def report(self, displayReport = True, reportToFile = None):
         if len(self.reportData) > 0:
