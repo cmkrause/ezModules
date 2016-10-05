@@ -143,6 +143,51 @@ def SQLiteQueryToTable(inputDB, dbQuery, outputTable, fields,
 
     return True
 
+class SQLiteWrapper:
+    def __init__(self, DB, debugOn = False):
+        self.Connection = sqlite3.connect(DB)
+        self.Connection.row_factory = sqlite3.Row
+        self.Cursor = self.Connection.cursor()
+        self.debugOn = debugOn
+        
+    def execSQL(self, query, **kwargs):
+        self.debugCheck(query, kwargs)
+        self.Cursor.execute(query)
+        self.Connection.commit()
+        
+    def returnAll(self, query, **kwargs):
+        self.debugCheck(query, kwargs)
+        self.execSQL(query)
+        return self.Cursor.fetchall()
+    
+    def returnOne(self, query, **kwargs):
+        self.debugCheck(query, kwargs)
+        self.execSQL(query)
+        return self.Cursor.fetchone()
+    
+    def returnValue(self, query, **kwargs):
+        self.debugCheck(query, kwargs)
+        self.execSQL(query)
+        return self.Cursor.fetchone()[self.Cursor.description[0][0]]
+    
+    def returnN(self, query, N, **kwargs):
+        self.debugCheck(query, kwargs)
+        self.execSQL(query)
+        return self.Cursor.fetchall()[:N]
+    
+    def lastID(self):
+        return self.Cursor.lastrowid
+    
+    def debugCheck(self, query, keys):
+        printedQuery = False
+        for key in keys:
+            if key == "debug":
+                if keys[key] == True:
+                    print query
+                    printedQuery = True
+        if self.debugOn == True and printedQuery == False:
+            print query
+
 if __name__ == "__main__":
 
     rootFolder  = "C:\\MasterThesis\\PADTACBG\\"
