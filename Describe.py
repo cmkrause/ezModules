@@ -158,15 +158,17 @@ def hasAttributeIndex(inputOBJ,
 
     return foundAttributeIndex
 
-## These two functions below are oosely inspired from
+## These two functions below are loosely inspired from
 ## http://gis.stackexchange.com/a/101462
 ## Accomodates large datasets
 def fieldMax(table, fieldName):
-    maxValue = 0
+    maxValue = None
 
     cursor = arcpy.da.SearchCursor(table, fieldName)
     
     for row in cursor:
+        if maxValue == None:
+            maxValue = row[0]
         if row[0] > maxValue:
             maxValue = row[0]      
     del cursor
@@ -174,11 +176,13 @@ def fieldMax(table, fieldName):
     return maxValue
 
 def fieldMin(table, fieldName):
-    minValue = 0
+    minValue = None
 
     cursor = arcpy.da.SearchCursor(table, fieldName)
     
     for row in cursor:
+        if minValue == None:
+            minValue = row[0]
         if row[0] < minValue:
             minValue = row[0]      
     del cursor
@@ -198,7 +202,7 @@ def fieldSum(table, fieldName):
     return array[fieldName].sum()
 
 def fieldUniqueValues(table, fieldName, sort = True, reverse = False, skipNULLs = True):
-    values = []
+    uniqueValues = set()
 
     if skipNULLs == True:
         cursor = arcpy.da.SearchCursor(table, fieldName, "%s IS NOT NULL" % fieldName)
@@ -206,15 +210,15 @@ def fieldUniqueValues(table, fieldName, sort = True, reverse = False, skipNULLs 
         cursor = arcpy.da.SearchCursor(table, fieldName)
     
     for row in cursor:
-        values.append(row[0])
+        uniqueValues.add(row[0])
     del cursor
 
-    uniqueValues = set(values)
+    uniqueValues = list(uniqueValues)
 
     if sort == True:
-        return sorted(list(uniqueValues), reverse = reverse)
+        return sorted(uniqueValues, reverse = reverse)
     else:
-        return list(uniqueValues)
+        return uniqueValues
 
 def fieldValues(table, fieldName, sort = True, reverse = False, skipNULLs = True):
     values = []
