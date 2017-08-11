@@ -6,26 +6,124 @@ from ez.Misc import *
 from ez.Describe import *
 from ez.Table import *
 from scipy.stats import chi2_contingency
+from numpy import percentile
 
-def calcPercentageColumns(inputFC, columns):
 
-    for column in columns:
-        arcpy.AddField_management(inputFC, "PCT_%s" % column, "DOUBLE")
+## This function creates percentage columns
+## The total parameter controls how the percentages are calculated
+## When total = "COLUMN"
+##      This function takes a column and calculates a new column
+##      with the percentage of that column total
+##      For example, if you had a data table like
+##      GEOID | Pop2010
+##      ---------------
+##      27    | 100
+##      28    | 200
+##      29    | 200
+##      This function would update the table to
+##      GEOID | Pop2010 | PCT_Pop2010
+##      -----------------------------
+##      27    | 100     | 0.2
+##      28    | 200     | 0.4
+##      29    | 200     | 0.4
+##
+##      columns may be a string instead of a list if calculating a single
+##      column is desired
+## When total = "ROW"
+##      This function takes a list of columns and calculates new columns
+##      each with the percentage of that row total
+##      For example, if you had a data table like
+##      White | Black | Other
+##      ---------------------
+##      100   | 50    | 50
+##      This function would update the table to
+##      White | Black | Other | PCT_White | PCT_Black | PCT_Other
+##      ---------------------------------------------------------
+##      100   | 50    | 50    | 0.5       | 0.25      | 0.25
+def calcPercentageColumns(inputFC, columns, total = "COLUMN"):
+    if total == "COLUMN":
+        if type(columns) == str:
+            columns = [columns]
 
-    cursorColumns = copy(columns)
-    for column in columns:
-        cursorColumns.append("PCT_%s" % column)
+        columnSums = []
 
-    cursor = arcpy.da.UpdateCursor(inputFC, cursorColumns)
-    for row in cursor:
-        dataValues  = copy(row[:len(columns)])
-        dataSum     = sum(dataValues)
-        if dataSum > 0:
+        for column in columns:
+            percentColumn = "PCT_%s" % column
+            arcpy.AddField_management(inputFC, percentColumn, "DOUBLE")
+            columnSums.append(fieldSum(inputFC, column)) 
+
+        cursorColumns = copy(columns)
+        for column in columns:
+            cursorColumns.append("PCT_%s" % column)
+
+        cursor = arcpy.da.UpdateCursor(inputFC, cursorColumns)
+        for row in cursor:
+            dataValues  = copy(row[:len(columns)])
             for columnNumber in range(len(columns)):
-                percentage = dataValues[columnNumber] / dataSum
+                percentage = dataValues[columnNumber] / columnSums[columnNumber]
                 dataValues.append(percentage)
             cursor.updateRow(dataValues)
-    del cursor
+        del cursor
+
+
+    if total == "ROW":
+        for column in columns:
+            arcpy.AddField_management(inputFC, "PCT_%s" % column, "DOUBLE")
+
+        cursorColumns = copy(columns)
+        for column in columns:
+            cursorColumns.append("PCT_%s" % column)
+
+        cursor = arcpy.da.UpdateCursor(inputFC, cursorColumns)
+        for row in cursor:
+            dataValues  = copy(row[:len(columns)])
+            dataSum     = sum(dataValues)
+            if dataSum > 0:
+                for columnNumber in range(len(columns)):
+                    percentage = dataValues[columnNumber] / dataSum
+                    dataValues.append(percentage)
+                cursor.updateRow(dataValues)
+        del cursor
+
+    return True
+
+class quantileCalculator:
+    def __init__(self, data, n = 4, interpolationMethod = "linear"):
+        self.valueRanges = []
+        for i in range(1, n + 1):
+            lowerPercentile = (100 / n) * (i - 1)
+            upperPercentile = (100 / n) * i
+
+            lowerPercentileValue = percentile(data, lowerPercentile, interpolation = interpolationMethod)
+            upperPercentileValue = percentile(data, upperPercentile, interpolation = interpolationMethod)
+
+            self.valueRanges.append([lowerPercentileValue, upperPercentileValue])
+
+    def __call__(self, x):
+        for i in  xrange(len(self.valueRanges)):
+            lowerLimit, upperLimit  = self.valueRanges[i]
+            if x >= lowerLimit and x < upperLimit:
+                return i + 1
+            ## Special case for the top value
+            if i + 1 == len(self.valueRanges) and x == upperLimit:
+                return i + 1
+
+def calcQuantileColumns(inputFC, columns, n):
+    if type(columns) == str:
+        columns = [columns]
+
+    for column in columns:
+        newColumn = "QNT_%s" % column
+        arcpy.AddField_management(inputFC, newColumn, "SHORT")
+        quantiles = quantileCalculator(fieldValues(inputFC, column), n)
+
+        cursor = arcpy.da.UpdateCursor(inputFC, [column, newColumn])
+        for row in cursor:
+            if row[0] <> None:
+                cursor.updateRow([row[0], quantiles(row[0])])
+            else:
+                cursor.updateRow([None, None])
+        del cursor
 
     return True
 
@@ -99,9 +197,15 @@ def contigencyTable2FC(pointFC, polygonFC, pointQueries, polygonQueries,
     
 
 if __name__ == "__main__":
-    inputFC = "C:\\NHGIS\\NHGIS2010.gdb\\Blockgroups"
+    ##inputFC = "C:\\NHGIS\\NHGIS2010.gdb\\Blockgroups"
 
     ##print calcPercentageColumns(inputFC, ["CM1AA", "CM1AB", "CM1AC", "CM1AD", "CM1AE", "CM1AF", "CM1AG"])
-    print "test"
+    ##print "test"
 
-    
+    #inputTBL = "C:\\MasterThesis\\Spring2017\\Metros_Analysis\\Extra.gdb\\OD_BG_G19140_Statistics"    
+
+    #calcPercentageColumns(inputTBL, "SUM_ADKXE001")
+
+    inputTBL = "C:\\MasterThesis\\Spring2017\\Metros_Analysis\\Extra.gdb\\OD_BG_G19140"
+
+    calcQuantileColumns(inputTBL, ["ADNKE001", "ADRWE001"], 4)

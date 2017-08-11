@@ -1,19 +1,24 @@
-from progressbar import ProgressBar, Bar, ETA, Timer, Percentage
+from progressbar import ProgressBar, Bar, AdaptiveETA, Timer, Percentage, FormatCustomText
 
 
-# Adapted from examples found here:
-# http://progressbar-2.readthedocs.org/en/latest/usage.html#bar-with-custom-widgets
+## Adapted from examples found here:
+## http://progressbar-2.readthedocs.org/en/latest/usage.html#bar-with-custom-widgets
+## http://stackoverflow.com/a/8460856
+## http://pythonhosted.org/progressbar2/examples.html
 class ezProgressBar:
 
     def __init__(self, iterations):
-        widgets = [Percentage(), " | ", Timer(), " | ", ETA(), " | ", Bar()]
-        self.pbar = ProgressBar(widgets=widgets, max_value=iterations)
+        self.textFormatter = FormatCustomText("%(msg)s",{"msg":""})
+        self.widgets = [self.textFormatter, Percentage(), " | ", Timer(), " | ", AdaptiveETA(), Bar()]
+        self.pbar = ProgressBar(widgets = self.widgets, max_value = iterations)
         self.pbar.start()
         self.iterationCount = 0
         self.maxIterations = iterations
         
-    def update(self):
-        self.iterationCount += 1
+    def update(self, step = 1, label = ""):
+        if label <> "":
+            self.textFormatter.update_mapping(msg = "%s | " % label.strip())
+        self.iterationCount += step
         if self.iterationCount <= self.maxIterations:
             self.pbar.update(self.iterationCount)
         
@@ -27,6 +32,9 @@ if __name__ == "__main__":
         
     ezPBar = ezProgressBar(12)
     for i in xrange(12):
+        
         sleep(1)
-        ezPBar.update()
+        ezPBar.update(label = "%s iteration" % i)
+
+        
     ezPBar.finish()

@@ -4,8 +4,8 @@ import itertools
 import re
 
 # Adapted from http://stackoverflow.com/a/2257449/6214388
-def randomString(size=32, chars=string.ascii_uppercase + string.digits):
-    return ''.join(random.choice(chars) for _ in range(size))
+def randomString(size=32, chars=string.ascii_uppercase + string.ascii_lowercase):
+    return ''.join(random.choice(chars) for i in xrange(size))
 
 # Originally seen on http://anothergisblog.blogspot.com/2016/08/more-on-pandas-data-loading-with-arcgis.html
 # Appears to have originated from http://stackoverflow.com/a/8998040/6214388
@@ -22,7 +22,19 @@ def chunkIterable(iterable, chunkSize):
             first_el = next(chunk_it)
         except StopIteration:
             return
-        yield itertools.chain((first_el,), chunk_it) 
+        yield itertools.chain((first_el,), chunk_it)
+
+# Adapted from http://stackoverflow.com/a/2130035
+def chunkList(seq, num):
+    avg = len(seq) / float(num)
+    out = []
+    last = 0.0
+
+    while last < len(seq):
+        out.append(seq[int(last):int(last + avg)])
+        last += avg
+
+    return out
 
 # Adapted from http://stackoverflow.com/a/1277047
 def cleanseString(inputString):
@@ -32,3 +44,5 @@ def cleanseString(inputString):
 
 if __name__ == "__main__":
     print randomString()
+
+    print chunkList(range(1000), 3)

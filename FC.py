@@ -67,11 +67,12 @@ def FCToFC(inputFC, outputFC,
     return True
 
 def TableToTable(inputTable, outputTable,
-                 subsetQuery = None, keepFields = "ALL", omitFields = None):
+                 subsetQuery = None, keepFields = "ALL", omitFields = None, templateOnly = False):
     ## This function is a more capable version of the built-in
     ## Table to Table tool.  For more information
     ## on the original tool, go to
     ## http://pro.arcgis.com/en/pro-app/tool-reference/conversion/feature-class-to-feature-class.htm
+    ## TO-DO: Make the templateOnly more efficient (or maybe make a new function)
 
     outputTableLocation = os.path.dirname(outputTable)
     outputTableName = os.path.basename(outputTable)
@@ -128,6 +129,9 @@ def TableToTable(inputTable, outputTable,
                                           field_mapping = fieldMappings,
                                           where_clause = subsetQuery)
 
+    if templateOnly == True:
+        arcpy.DeleteRows_management(outputTable)
+
     return True
 
 def copyFieldsToFC(inputOBJ, outputFC, fieldsToCopy):
@@ -167,6 +171,16 @@ def createTable(outputTable, fields):
         fieldName, fieldType = field
         arcpy.AddField_management(outputTable, fieldName, fieldType)
 
+    return True
+
+def clearAliases(inputTable):
+    fields = listFieldNames(inputTable)
+    for field in fields:
+        if getFieldObject(inputTable, field).isNullable == True:
+            nullability = "NULLABLE"
+        else:
+            nullability = "NON_NULLABLE"
+        arcpy.AlterField_management(inputTable, field, field_is_nullable = nullability, clear_field_alias = "TRUE")
     return True
 
 if __name__ == "__main__":

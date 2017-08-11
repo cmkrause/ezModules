@@ -40,8 +40,14 @@ def tableToSQLite(inputTable, fields, outputDB,
         outputTableName = os.path.basename(inputTable)
     
     ## Get the data from the table
-    numpyArray = arcpy.da.TableToNumPyArray(inputTable, fields)
-    pyList = numpyArray.tolist()
+    pyList = []
+    cursor = arcpy.da.SearchCursor(inputTable, fields)
+    for row in cursor:
+        pyList.append(row)
+    del cursor
+    
+##    numpyArray = arcpy.da.TableToNumPyArray(inputTable, fields)
+##    pyList = numpyArray.tolist()
 
     ## Establish a SQLite connection
     conn = sqlite3.connect(outputDB)

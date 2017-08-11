@@ -3,12 +3,13 @@ from ez.Table import *
 
 class ezTimer:
 
-    def __init__(self, title = "", realtimePrint = False):
+    def __init__(self, title = "", realtimePrint = False, style = "AsciiTable"):
         self.reportData = []
         self.headers = ["Total Time", "Step Time", "Step Description"]
         self.title = title
         self.realtimePrint = realtimePrint
         self.printedHeader = False
+        self.style = style
 
         self.timeZero = datetime.now()
         self.lastTime = self.timeZero
@@ -26,22 +27,26 @@ class ezTimer:
 
         if self.realtimePrint == True:
             if self.printedHeader == False:
-                reportTable = ezTable(self.reportData, self.headers, title = self.title, display = False)
+                reportTable = ezTable(self.reportData, self.headers, title = self.title, display = False, style = self.style)
                 self.printedHeader = True
             else:
-                reportTable = ezTable([reportRow], display = False)
+                reportTable = ezTable([reportRow], display = False, style = self.style)
             print reportTable
             return reportTable
 
-    def report(self, displayReport = True, reportToFile = None):
+    def report(self, display = True, outputFile = None):
         if len(self.reportData) > 0:
-            reportTable = ezTable(self.reportData, self.headers, title = self.title, display = False)
+            reportTable = ezTable(self.reportData, self.headers, title = self.title, display = False, style = self.style)
         else:
             currentTime     = datetime.now()
             totalTimeDelta  = currentTime - self.timeZero
-            reportTable = ezTable([[totalTimeDelta]], ["Total Time"], title = self.title, display = False)
-        if displayReport == True:
+            reportTable = ezTable([[totalTimeDelta]], ["Total Time"], title = self.title, display = False, style = self.style)
+        if display == True:
             print reportTable
+        if outputFile <> None:
+            f = open(outputFile, "w")
+            f.write(reportTable)
+            f.close()
         return reportTable
 
 if __name__ == "__main__":

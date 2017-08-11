@@ -11,12 +11,12 @@ describing data sets.
 
 import arcpy
 
-def countFeatures(inputLYR, query=None):
+def countFeatures(inputLYR, query = None):
     if query <> None:
         arcpy.SelectLayerByAttribute_management(inputLYR, where_clause = query)
     return int(arcpy.GetCount_management(inputLYR).getOutput(0))
 
-def listFieldNames(inputOBJ, includeSystemFields = False):
+def listFieldNames(inputOBJ, includeSystemFields = False, types = []):
     """Returns a list of the field names of the specified data set.
 
     It is very common to want a list of field names of a data set.
@@ -42,11 +42,21 @@ def listFieldNames(inputOBJ, includeSystemFields = False):
     fieldNames = []
 
     for fieldObject in fieldObjects:
-        if includeSystemFields == True:
-            fieldNames.append(fieldObject.name)
-        else:
-            if fieldObject.type not in ["Geometry", "OID"]:
+        if len(types) == 0:
+            if includeSystemFields == True:
                 fieldNames.append(fieldObject.name)
+            else:
+                if fieldObject.type not in ["Geometry", "OID"] and fieldObject.name not in ["Shape_Length", "Shape_Area"]:
+                    fieldNames.append(fieldObject.name)
+        else:
+            if includeSystemFields == True:
+                if fieldObject.type in types:
+                    fieldNames.append(fieldObject.name)
+            else:
+                if fieldObject.type not in ["Geometry", "OID"] and fieldObject.name not in ["Shape_Length", "Shape_Area"]:
+                    if fieldObject.type in types:
+                        fieldNames.append(fieldObject.name)
+                    
 
     return fieldNames
 
@@ -147,6 +157,81 @@ def hasAttributeIndex(inputOBJ,
                 foundAttributeIndex = True
 
     return foundAttributeIndex
+
+## These two functions below are oosely inspired from
+## http://gis.stackexchange.com/a/101462
+## Accomodates large datasets
+def fieldMax(table, fieldName):
+    maxValue = 0
+
+    cursor = arcpy.da.SearchCursor(table, fieldName)
+    
+    for row in cursor:
+        if row[0] > maxValue:
+            maxValue = row[0]      
+    del cursor
+
+    return maxValue
+
+def fieldMin(table, fieldName):
+    minValue = 0
+
+    cursor = arcpy.da.SearchCursor(table, fieldName)
+    
+    for row in cursor:
+        if row[0] < minValue:
+            minValue = row[0]      
+    del cursor
+
+    return minValue
+
+def fieldMean(table, fieldName):
+    array = arcpy.da.FeatureClassToNumPyArray(table, (fieldName, ))
+    return array[fieldName].mean()
+
+def fieldStdDev(table, fieldName):
+    array = arcpy.da.FeatureClassToNumPyArray(table, (fieldName, ))
+    return array[fieldName].std()
+
+def fieldSum(table, fieldName):
+    array = arcpy.da.FeatureClassToNumPyArray(table, (fieldName, ))
+    return array[fieldName].sum()
+
+def fieldUniqueValues(table, fieldName, sort = True, reverse = False, skipNULLs = True):
+    values = []
+
+    if skipNULLs == True:
+        cursor = arcpy.da.SearchCursor(table, fieldName, "%s IS NOT NULL" % fieldName)
+    else:
+        cursor = arcpy.da.SearchCursor(table, fieldName)
+    
+    for row in cursor:
+        values.append(row[0])
+    del cursor
+
+    uniqueValues = set(values)
+
+    if sort == True:
+        return sorted(list(uniqueValues), reverse = reverse)
+    else:
+        return list(uniqueValues)
+
+def fieldValues(table, fieldName, sort = True, reverse = False, skipNULLs = True):
+    values = []
+    
+    if skipNULLs == True:
+        cursor = arcpy.da.SearchCursor(table, fieldName, "%s IS NOT NULL" % fieldName)
+    else:
+        cursor = arcpy.da.SearchCursor(table, fieldName)
+    
+    for row in cursor:
+        values.append(row[0])
+    del cursor
+
+    if sort == True:
+        return sorted(values, reverse = reverse)
+    else:
+        return list(values)
 
 if __name__ == "__main__":
     import os
