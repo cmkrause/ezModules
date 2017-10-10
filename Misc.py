@@ -3,6 +3,27 @@ import random
 import itertools
 import re
 
+def pctDifference(x1, x2):
+    return abs(x1 - x2) / ((x1 + x2) / 2)
+
+def minElementDifference(data):
+    ## For a list like [12, 5, 14], returns 2
+    ## (the smallest difference between all pairs of values in the list)
+    data = sorted(data, reverse = True)
+    return min([value - data[index] for index, value in enumerate(data[:-1], 1)])
+
+def maxElementDifference(data):
+    ## for a list like [5, 12, 17], returns 12
+    ## (the difference between the maximum and minimum values of the list)
+    return max(data) - min(data)
+
+# From https://stackoverflow.com/a/28289906
+def frange(start, stop, step):
+    x = start
+    while x < stop:
+        yield x
+        x += step
+
 # Adapted from http://stackoverflow.com/a/2257449/6214388
 def randomString(size=32, chars=string.ascii_uppercase + string.ascii_lowercase):
     return ''.join(random.choice(chars) for i in xrange(size))
