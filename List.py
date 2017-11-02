@@ -9,6 +9,8 @@ def listDatasets(wildcard = None, featureType = None, path = None):
             return arcpy.ListDatasets(feature_type = featureType)
         elif wildcard <> None and featureType == None:
             return arcpy.ListDatasets(wild_card = wildcard)
+        elif wildcard == None and featureType == None:
+            return arcpy.ListDatasets()
     else:
         with Environment("workspace", path):
             if wildcard <> None and featureType <> None:
@@ -17,6 +19,8 @@ def listDatasets(wildcard = None, featureType = None, path = None):
                 datasets = arcpy.ListDatasets(feature_type = featureType)
             elif wildcard <> None and featureType == None:
                 datasets = arcpy.ListDatasets(wild_card = wildcard)
+            elif wildcard == None and featureType == None:
+                datasets = arcpy.ListDatasets()
 
         fullPathDatasets = []
         for dataset in datasets:
@@ -40,6 +44,8 @@ def listRasters(wildcard = None, rasterType = None, path = None):
             return arcpy.ListRasters(raster_type = rasterType)
         elif wildcard <> None and rasterType == None:
             return arcpy.ListRasters(wild_card = wildcard)
+        elif wildcard == None and rasterType == None:
+            return arcpy.ListRasters()
     else:
         with Environment("workspace", path):
             if wildcard <> None and rasterType <> None:
@@ -48,6 +54,8 @@ def listRasters(wildcard = None, rasterType = None, path = None):
                 rasters = arcpy.ListRasters(raster_type = rasterType)
             elif wildcard <> None and rasterType == None:
                 rasters = arcpy.ListRasters(wild_card = wildcard)
+            elif wildcard == None and rasterType == None:
+                rasters = arcpy.ListRasters()
 
         fullPathRasters = []
         for raster in rasters:
