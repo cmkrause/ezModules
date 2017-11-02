@@ -149,6 +149,12 @@ def createFC(outputFC, geometryType, fields,
              spatialReference = ""):
 
     outputFCPath = os.path.dirname(outputFC)
+    if outputFCPath == "":
+        try:
+            outputFCPath = arcpy.env.workspace
+        except:
+            raise ValueError("outputFC must contain the full path OR env.workspace must be defined")
+        
     outputFCName = os.path.basename(outputFC)
     
     arcpy.CreateFeatureclass_management(outputFCPath, outputFCName, geometryType,
