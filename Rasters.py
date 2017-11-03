@@ -41,7 +41,7 @@ def getRasterProperty(raster, rasterProperty, bandIndex = None, skipExistingStat
     else:
         return str(returnValue)
 
-def rastersOverlap(rasterA, rasterB, extentsOnly = True):
+def rastersOverlap(rasterA, rasterB, extentsOnly = False):
     ## Using the built-in .overlaps() function on an arcpy Extent object seems to be broken
     ## Since we are only comparing the extents, comparing their bounds numerically is trivial
     ## The function below does just that
