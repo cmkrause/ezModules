@@ -169,6 +169,12 @@ def createFC(outputFC, geometryType, fields,
 def createTable(outputTable, fields):
 
     outputTablePath = os.path.dirname(outputTable)
+    if outputTablePath == "":
+        try:
+            outputTablePath = arcpy.env.workspace
+        except:
+            raise ValueError("outputFC must contain the full path OR env.workspace must be defined")
+        
     outputTableName = os.path.basename(outputTable)
     
     arcpy.CreateTable_management(outputTablePath, outputTableName)
