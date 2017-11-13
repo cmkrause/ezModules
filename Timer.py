@@ -1,7 +1,7 @@
 from datetime import datetime
 from ez.Table import *
 
-class ezTimer:
+class Timer:
 
     def __init__(self, title = "", realtimePrint = False, style = "AsciiTable", arcToolbox = False):
         self.reportData = []
